@@ -4,13 +4,16 @@ const Schema = require('../model/model');
 const request = require("request");
 const moment = require("moment");
 const base64 = require("base-64");
+
 // Global variables and methods
 
 // Global variables
+// Explicit values are in the .env file which i gitignore-d
 const consumer_key = process.env.CONSUMER_KEY;
 const consumer_secret = process.env.CONSUMER_SECRET;
 const url = process.env.SAF_URL //change this after going live
-let auth = "Basic " + new Buffer.from(consumer_key + ":" + consumer_secret).toString("base64");
+// let auth = "Basic " + new Buffer.from(consumer_key + ":" + consumer_secret).toString("base64");
+// let auth = "Basic " + new Buffer(consumer_key + ":" + consumer_secret).toString("base64");
 const url_for_api = process.env.URL_FOR_API//change this after going live
 const shortCode = process.env.SHORTCODE //this is the testing shortcode change it to your own after going live
 const passkey = process.env.PASSKEY //change this after going live
@@ -27,13 +30,20 @@ function getToken(tokenParam) {
     let oauth_token;
     request({
         url: url,
-        headers: {
-            Authorization: auth
+        auth: {
+            user: consumer_key,
+            password: consumer_secret
         }
     },
         function (error, response, body) {
+
+            // parse body to json object
             let oauth_body = JSON.parse(body);
+
+            // extract access token from the parsed object
             oauth_token = oauth_body.access_token;
+
+            // pass it to a callback function so it can be accessed externally
             tokenParam(oauth_token);
         }
     );
@@ -82,19 +92,18 @@ lipa = ({ amount, phoneNumber, callback_function }) => {
 
 // get the status of a pending lipa na mpesa transaction
 //Lipa na M-Pesa Online Query Request
-getTheTransactionStatus = ({CheckoutRequestID, callback_function}) => {
+getTheTransactionStatus = ({ CheckoutRequestID, callback_function }) => {
 
     // get authorisation token
     getToken(function (token) {
         let request = require("request"),
             oauth_token = token,
-            url =
-                "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query";
+            url2 = "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query";
         auth = "Bearer " + oauth_token;
 
         request({
             method: "POST",
-            url: url,
+            url: url2,
             headers: {
                 Authorization: auth
             },
@@ -145,12 +154,14 @@ exports.lipaNaMpesa = (req, res, next) => {
                 .then(() => {
 
                     // invoke method to check progress here
-                   // getTheTransactionStatus(CheckoutRequestID); 
+                    // getTheTransactionStatus(CheckoutRequestID); 
 
                     // send the body as a response
                     res.status(200).send(
-                        {"message": "success",
-                        "CheckoutRequestID": `${CheckoutRequestID}` })
+                        {
+                            "message": "success",
+                            "CheckoutRequestID": `${CheckoutRequestID}`
+                        })
                 })
                 .catch(err => {
                     res.status(400).send(err);
@@ -159,13 +170,13 @@ exports.lipaNaMpesa = (req, res, next) => {
     })
 }
 
-// Handle payment
+// Get the transaction status
 exports.getTransactionStatus = (req, res, next) => {
 
-    let CheckoutRequestID = req.CheckoutRequestID;
+    let CheckoutRequestID = req.body.CheckoutRequestID
 
     getTheTransactionStatus({
-        CheckoutRequestID,
+        CheckoutRequestID: CheckoutRequestID,
         callback_function: (body) => {
             res.send(body);
         }
