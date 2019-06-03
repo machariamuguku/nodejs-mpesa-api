@@ -19,10 +19,7 @@ also allow x-www-form-urlencoded (strings, arrays etc..)
 */
 router.use(express.urlencoded({extended: true})); 
 
-
-router.get('/', controller.giveReply);
 router.post('/pay', controller.lipaNaMpesa);
 router.post('/paymentstatus', controller.getTransactionStatus);
-
 
 module.exports = router;

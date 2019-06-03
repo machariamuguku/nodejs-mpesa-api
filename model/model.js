@@ -1,7 +1,19 @@
 const mongoose = require('mongoose');
 const MongooseSchema = mongoose.Schema;
 
-const Schema = new MongooseSchema({
+const LipaNaMPesaSchema = new MongooseSchema({
+    phoneNumber: {
+        type: String,
+        required: true
+    },
+    amount: {
+        type: String,
+        required: true
+    },
+    accountReference: {
+        type: String,
+        required: true
+    },
     MerchantRequestID: {
         type: String,
         required: true
@@ -26,6 +38,7 @@ const Schema = new MongooseSchema({
         type: Date,
         default: Date.now()
     }
+
 });
 
-module.exports = mongoose.model('Schema', Schema);
+module.exports = mongoose.model('LipaNaMPesaSchema', LipaNaMPesaSchema);
