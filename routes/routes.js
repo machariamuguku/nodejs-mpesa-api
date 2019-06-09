@@ -21,5 +21,6 @@ router.use(express.urlencoded({extended: true}));
 
 router.post('/pay', controller.lipaNaMpesa);
 router.post('/paymentstatus', controller.getTransactionStatus);
+router.post('/getWebHook',controller.getWebHook);
 
 module.exports = router;

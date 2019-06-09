@@ -128,27 +128,41 @@ getTheTransactionStatus = ({ CheckoutRequestID, callback_function }) => {
 };
 
 // The Global save data to mongo db function
-saveToMongoDb = ({ phoneNumber, amount, accountReference, body }) => {
+saveToMongoDb = ({ jsonObjectToSave, logMessage, errorMessage }) => {
 
-    const LipaSchema = new LipaNaMPesaSchema({
-        phoneNumber: phoneNumber,
-        amount: amount,
-        accountReference: accountReference,
-        MerchantRequestID: body.MerchantRequestID,
-        CheckoutRequestID: body.CheckoutRequestID,
-        ResponseCode: body.ResponseCode,
-        ResponseDescription: body.ResponseDescription,
-        CustomerMessage: body.CustomerMessage,
-    });
+    const LipaSchema = new LipaNaMPesaSchema(
+        jsonObjectToSave
+    );
     LipaSchema
         .save()
         .then(() => {
-            console.log(`mongodb successfully saved data for ${phoneNumber}`);
+            console.log(logMessage);
         })
         .catch(err => {
-            console.log(`mongodb failed to saved data for ${phoneNumber}`);
+            console.log(errorMessage);
         })
 }
+
+// The Global update data to mongo db function
+updateMongoDb = ({ CheckoutRequestID, jsonObjectToSave, logMessage, errorMessage }) => {
+
+    console.log(`the checkouthing is ${CheckoutRequestID} and the jsonobjectthingy is ${jsonObjectToSave}`);
+
+    LipaNaMPesaSchema.findOneAndUpdate({ amount: "1" },
+        { $set: { CallbackMetadata: jsonObjectToSave } },
+        { overwrite: true, useFindAndModify: false },
+        function (err, docs) {
+            if (err) {
+                console.log(errorMessage);
+                return errorMessage;
+            } else {
+                console.log(logMessage);
+                return logMessage
+            }
+        })
+
+}
+
 
 exports.lipaNaMpesa = (req, res) => {
 
@@ -170,23 +184,31 @@ exports.lipaNaMpesa = (req, res) => {
         accountReference: accountReference,
         callback_function: (error, body) => {
 
-            saveToMongoDb({
-                phoneNumber: phoneNumber,
-                amount: amount,
-                accountReference: accountReference,
-                body: body
-            });
-
             if (error) {
                 res.status(400).send({
                     "message": "error",
                     "error": `${err}`,
                 });
+            } else if (body) {
+                saveToMongoDb({
+                    jsonObjectToSave: {
+                        phoneNumber: phoneNumber,
+                        amount: amount,
+                        accountReference: accountReference,
+                        MerchantRequestID: body.MerchantRequestID,
+                        CheckoutRequestID: body.CheckoutRequestID,
+                        ResponseCode: body.ResponseCode,
+                        ResponseDescription: body.ResponseDescription,
+                        CustomerMessage: body.CustomerMessage
+                    }, logMessage: `mongodb successfully saved data for ${phoneNumber}`,
+                    errorMessage: `mongodb failed to saved data for ${phoneNumber}`
+                });
+
+                res.status(200).send({
+                    "ResponseCode": `${body.ResponseCode}`,
+                    "CheckoutRequestID": `${body.CheckoutRequestID}`,
+                })
             }
-            res.status(200).send({
-                "ResponseCode": `${body.ResponseCode}`,
-                "CheckoutRequestID": `${body.CheckoutRequestID}`,
-            })
         }
     })
 }
@@ -208,4 +230,25 @@ exports.getTransactionStatus = (req, res) => {
             res.status(200).send(body);
         }
     });
+}
+
+// Receive the mpesa webhook
+exports.getWebHook = (req, res) => {
+
+    let body = req.body.Body.stkCallback;
+    let objectToUpdate = req.body.Body.stkCallback.CallbackMetadata.Item;
+
+    // format response code to safaricom servers
+    let successMessage = {
+        ResponseCode: "00000000"
+    }
+
+    updateMongoDb({
+        CheckoutRequestID: body.CheckoutRequestID,
+        jsonObjectToSave: objectToUpdate,
+        logMessage: `mongodb successfully updated?`,
+        errorMessage: `mongodb failed to update!!`
+    });
+
+    res.status(200).send(successMessage);
 }

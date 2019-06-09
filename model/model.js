@@ -37,8 +37,14 @@ const LipaNaMPesaSchema = new MongooseSchema({
     date: {
         type: Date,
         default: Date.now()
+    },
+    CallbackMetadata: {
+        type: Array,
+        default: "pending",
+        required: false
     }
-
-});
+},
+    { versionKey: '_versionKey' }, // changed the default version key form '_v'
+    { collection: 'MpesaApi' }); // define own collection
 
 module.exports = mongoose.model('LipaNaMPesaSchema', LipaNaMPesaSchema);

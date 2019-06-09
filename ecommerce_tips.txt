@@ -1,0 +1,28 @@
+from here -> https://stackoverflow.com/questions/3209264/accepting-payment-best-practices
+
+X asked: 
+I am creating an ecommerce site that uses the payment gateway DPS. The payment gateway just takes a users details and returns whether the payment was successful or not.
+I am just wondering if anyone has any good resources for how to make a really robust payments page that can handle large volumes of transactions safely. Are there well tested techniques and strategies for high volume payments pages?
+
+Y answered:
+You'll want to design your code in such a way as took keep your data in a valid state.
+The big liability you face is that you send data off for Auth/Capture, and then, for whatever reason, something on your end fails. You've charged your customer, but for whatever reason, you don't know this fact! Eventually, some irate customer is going to start shouting at you over the phone. That's a bad time.
+The general idea is to put some safeguards in place so you can identify these kinds of problems. The problem should be very rare, if it even ever happens, so fixing the mess will probably be a manual process.
+Here's what I would do:
+Design a database table that tracks payments (let's call it "payment"), and relate it to your "order" table (so payment.order_id references order.id).
+When it's time to interact with your gateway, set up a new payment record, containing any non-sensitive data you're about to pass to the payment gateway. Have a "status" column in your payment table, and set it to "pending"
+Attempt the auth/capture transaction with your gateway. Upon receiving a response, update the payment record status to "approved", "declined", or "error" and save any relevant metadata (decline reasons, transaction ID, etc). If the gateway times out, that's probably just a kind of "error", though you might retry once or twice.
+Run a cron job every now and then looking for payment records that are "pending", and older than, say, 30 seconds. If you find any, panic and tell a developer/operations person.
+There are certainly other things that could go wrong, but this is the big one that comes to mind, and the strategy I've described is one I've used on multiple occasions to mitigate the risk.
+
+
+
+// update mongo?
+BusUnit.findOne({uniqueId: 'some old existing doc id'}, function (err, doc) {
+    if (err) return done(err);
+    // Create the new field if it doesn't exist yet
+    doc.workUnits || (doc.workUnits = [];)
+    doc.workUnits.push('value');
+
+    doc.save(done);
+});
