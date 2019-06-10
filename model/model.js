@@ -2,15 +2,15 @@ const mongoose = require('mongoose');
 const MongooseSchema = mongoose.Schema;
 
 const LipaNaMPesaSchema = new MongooseSchema({
-    phoneNumber: {
+    PhoneNumber: {
         type: String,
         required: true
     },
-    amount: {
+    Amount: {
         type: String,
         required: true
     },
-    accountReference: {
+    AccountReference: {
         type: String,
         required: true
     },
@@ -34,14 +34,18 @@ const LipaNaMPesaSchema = new MongooseSchema({
         type: String,
         required: true
     },
-    date: {
-        type: Date,
-        default: Date.now()
+    Completness: {
+        type: String,
+        default: "pending"
     },
     CallbackMetadata: {
         type: Array,
         default: "pending",
         required: false
+    },
+    Date: {
+        type: Date,
+        default: Date.now()
     }
 },
     { versionKey: '_versionKey' }, // changed the default version key form '_v'

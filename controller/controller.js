@@ -144,25 +144,31 @@ saveToMongoDb = ({ jsonObjectToSave, logMessage, errorMessage }) => {
 }
 
 // The Global update data to mongo db function
-updateMongoDb = ({ CheckoutRequestID, jsonObjectToSave, logMessage, errorMessage }) => {
+updateMongoDb = ({ CheckParameter, SetParameter, ReturnParameter }) => {
 
-    console.log(`the checkouthing is ${CheckoutRequestID} and the jsonobjectthingy is ${jsonObjectToSave}`);
-
-    LipaNaMPesaSchema.findOneAndUpdate({ amount: "1" },
-        { $set: { CallbackMetadata: jsonObjectToSave } },
+    LipaNaMPesaSchema.findOneAndUpdate(CheckParameter,
+        {
+            $set: SetParameter
+        },
         { overwrite: true, useFindAndModify: false },
         function (err, docs) {
             if (err) {
-                console.log(errorMessage);
-                return errorMessage;
+                return `mongodb was successfull to ${ReturnParameter}`;
             } else {
-                console.log(logMessage);
-                return logMessage
+                return `mongodb failed to ${ReturnParameter}`;
             }
         })
-
 }
 
+// The Global check if data exists in mongo db function
+checkMongoDb = ({ FindParameter, callbackFunction }) => {
+
+    LipaNaMPesaSchema
+        .findOne(FindParameter)
+        .then(function (doc) {
+            callbackFunction(doc);
+        });
+}
 
 exports.lipaNaMpesa = (req, res) => {
 
@@ -185,23 +191,25 @@ exports.lipaNaMpesa = (req, res) => {
         callback_function: (error, body) => {
 
             if (error) {
+                console.log(`error paying with mpesa: ${err}`);
+
                 res.status(400).send({
-                    "message": "error",
-                    "error": `${err}`,
+                    "ResponseCode": "1234",
+                    "message": "error"
                 });
             } else if (body) {
                 saveToMongoDb({
                     jsonObjectToSave: {
-                        phoneNumber: phoneNumber,
-                        amount: amount,
-                        accountReference: accountReference,
+                        PhoneNumber: phoneNumber,
+                        Amount: amount,
+                        AccountReference: accountReference,
                         MerchantRequestID: body.MerchantRequestID,
                         CheckoutRequestID: body.CheckoutRequestID,
                         ResponseCode: body.ResponseCode,
                         ResponseDescription: body.ResponseDescription,
                         CustomerMessage: body.CustomerMessage
-                    }, logMessage: `mongodb successfully saved data for ${phoneNumber}`,
-                    errorMessage: `mongodb failed to saved data for ${phoneNumber}`
+                    }, logMessage: `mongodb successfully saved lipa na mpesa data for ${phoneNumber}`,
+                    errorMessage: `mongodb failed to saved lipa na mpesa data for ${phoneNumber}`
                 });
 
                 res.status(200).send({
@@ -222,12 +230,79 @@ exports.getTransactionStatus = (req, res) => {
         CheckoutRequestID: CheckoutRequestID,
         callback_function: (error, body) => {
             if (error) {
+                // if error is received send the request again
                 res.status(400).send({
-                    "message": "error",
-                    "error": `${err}`
+                    "ResponseCode": "1234",
+                    "message": "error"
+                });
+            } else if (body.ResultCode === "0") {
+                // Check if not updated by callback function to "complete" and if not updated then update
+                checkMongoDb({
+                    FindParameter: {
+                        'CheckoutRequestID': CheckoutRequestID,
+                        'Completness': "complete"
+                    },
+                    callbackFunction: (body) => {
+
+                        // handle completness already set to complete by webhook
+                        if (!(body === null)) {
+
+                            // send success message
+                            res.status(200).send({
+                                "ResponseCode": "0",
+                                "message": "complete"
+                            });
+                        }
+                        // handle completness not yet set to complete by webhook
+                        // i.e still pending
+                        // update the db
+                        else if (body === null) {
+                            // update database to complete if user made the payment
+                            updateMongoDb({
+                                CheckParameter: { CheckoutRequestID: CheckoutRequestID },
+                                SetParameter: { Completness: "complete" },
+                                ReturnParameter: `update to complete for ${CheckoutRequestID}`
+                            });
+
+                            // then send success message
+                            res.status(200).send({
+                                "ResponseCode": "0",
+                                "message": "complete"
+                            });
+                        }
+                    }
+                });
+            } else if (body.ResultCode === "1032") {
+                // update database to cancelled if user cancelled the request
+                updateMongoDb({
+                    CheckParameter: { CheckoutRequestID: CheckoutRequestID },
+                    SetParameter: { Completness: "cancelled" },
+                    ReturnParameter: `update to cancelled for ${CheckoutRequestID}`
+                });
+                // prompt user whether to send the request again
+                res.status(400).send({
+                    "ResponseCode": "1234",
+                    "message": "cancelled"
+                });
+            } else if (body.ResultCode === "1037") {
+                // update database to complete if user accepted the request
+                updateMongoDb({
+                    CheckParameter: { CheckoutRequestID: CheckoutRequestID },
+                    SetParameter: { Completness: "timed-out" },
+                    ReturnParameter: `update to timed-out for ${CheckoutRequestID}`
+                });
+                // prompt user whether to send the request again
+                res.status(400).send({
+                    "ResponseCode": "0001",
+                    "message": "timed-out"
+                });
+            } else {
+                // automatically send the request again
+                res.status(500).send({
+                    "ResponseCode": "0002",
+                    "message": "pending"
                 });
             }
-            res.status(200).send(body);
         }
     });
 }
@@ -236,18 +311,17 @@ exports.getTransactionStatus = (req, res) => {
 exports.getWebHook = (req, res) => {
 
     let body = req.body.Body.stkCallback;
-    let objectToUpdate = req.body.Body.stkCallback.CallbackMetadata.Item;
 
     // format response code to safaricom servers
     let successMessage = {
         ResponseCode: "00000000"
     }
 
+    // add received metadata to database
     updateMongoDb({
-        CheckoutRequestID: body.CheckoutRequestID,
-        jsonObjectToSave: objectToUpdate,
-        logMessage: `mongodb successfully updated?`,
-        errorMessage: `mongodb failed to update!!`
+        CheckParameter: { CheckoutRequestID: body.CheckoutRequestID },
+        SetParameter: { CallbackMetadata: [body.CallbackMetadata.Item], Completness: "complete" },
+        ReturnParameter: `update to complete for ${body.CheckoutRequestID}`
     });
 
     res.status(200).send(successMessage);
