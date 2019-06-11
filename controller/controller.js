@@ -170,9 +170,14 @@ checkMongoDb = ({ FindParameter, callbackFunction }) => {
         });
 }
 
+// The home router '/'
+exports.goHome = (req, res) => {
+    res.render('home');
+}
+
 exports.lipaNaMpesa = (req, res) => {
 
-    // the lipa na mpesa method
+    // the lipa na mpesa router method
     // processes mpesa payment
     // using passed in phone number and amount
     // called in the '/pay' router

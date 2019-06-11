@@ -14,15 +14,3 @@ When it's time to interact with your gateway, set up a new payment record, conta
 Attempt the auth/capture transaction with your gateway. Upon receiving a response, update the payment record status to "approved", "declined", or "error" and save any relevant metadata (decline reasons, transaction ID, etc). If the gateway times out, that's probably just a kind of "error", though you might retry once or twice.
 Run a cron job every now and then looking for payment records that are "pending", and older than, say, 30 seconds. If you find any, panic and tell a developer/operations person.
 There are certainly other things that could go wrong, but this is the big one that comes to mind, and the strategy I've described is one I've used on multiple occasions to mitigate the risk.
-
-
-
-// update mongo?
-BusUnit.findOne({uniqueId: 'some old existing doc id'}, function (err, doc) {
-    if (err) return done(err);
-    // Create the new field if it doesn't exist yet
-    doc.workUnits || (doc.workUnits = [];)
-    doc.workUnits.push('value');
-
-    doc.save(done);
-});

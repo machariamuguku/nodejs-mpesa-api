@@ -18,7 +18,9 @@ router.use(express.json());
 also allow x-www-form-urlencoded (strings, arrays etc..)
 */
 router.use(express.urlencoded({extended: true})); 
-router.get('/',(req,res)=>{res.send("whose your dzady?")});
+
+// The various routers
+router.get('/',controller.goHome);
 router.post('/pay', controller.lipaNaMpesa);
 router.post('/paymentstatus', controller.getTransactionStatus);
 router.post('/getWebHook',controller.getWebHook);
