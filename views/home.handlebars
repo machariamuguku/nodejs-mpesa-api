@@ -4,34 +4,110 @@
 
 <div class="container-fluid">
 
-    <div class="row mt-3">
+    <div class="row mt-2">
 
-        <div class="col-sm-4">
+        {{!-- 1 --}}
+        <div class="col-sm-4 space-below">
             <div class="card">
+                <div class="card-header">
+                    1. Send payment request to M-pesa
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Special title treatment</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                    <p class="card-text">Send payload in the body of a request to
+                        <span class="text-danger">https://nodempesaapi.herokuapp.com/pay</span>
+                    </p>
+
+                    <h6 class="card-title font-weight-bold">Sample body/send object</h6>
+
+                    <div class="p-3 mb-2 bg-light text-dark">
+                        <pre id="json">
+{
+	"amount": "1",
+	"phonenumber": "254728655403",
+	"accountReference": "000000001"
+}
+</pre>
+                    </div>
+
+                    <h6 class="card-title font-weight-bold">Sample received object</h6>
+
+                    <div class="p-3 mb-2 bg-light text-dark">
+                        <pre id="json">
+{
+	"ResponseCode": "0",
+	"CheckoutRequestID": "ws_CO_DMZ_371988472_11062019001720935"
+}
+</pre>
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-4">
+        {{!-- 2 --}}
+        <div class="col-sm-4 space-below">
             <div class="card">
+                <div class="card-header">
+                    2. Get Payment Status for a CheckoutRequestID
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Special title treatment</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                    <p class="card-text">Send payload in the body of a request to
+                        <span class="text-success">https://nodempesaapi.herokuapp.com/paymentstatus</span>
+                    </p>
+
+                    <h6 class="card-title font-weight-bold">Sample body/send object</h6>
+
+                    <div class="p-3 mb-2 bg-light text-dark">
+                        <pre id="json">
+{
+	"CheckoutRequestID": "ws_CO_DMZ_371988472_11062019001720935"
+}
+</pre>
+                    </div>
+
+                    <h6 class="card-title font-weight-bold">Sample received object</h6>
+
+                    <div class="p-3 mb-2 bg-light text-dark">
+                        <pre id="json">
+{
+    "ResponseCode": "0",
+    "message": "complete"
+}
+</pre>
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-4">
+
+
+
+
+        {{!-- 3 --}}
+        <div class="col-sm-4 space-below">
             <div class="card">
+                <div class="card-header">
+                    3. Receive Webhook From M-pesa
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Special title treatment</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                    <p class="card-text">You'll receive a webhook with payment details from M-pesa
+                    </p>
+
+                    <p class="card-text">Respond with a success payload in the body of the response to M-pesa servers
+                    </p>
+
+                    <h6 class="card-title font-weight-bold">Sample response object</h6>
+
+                    <div class="p-3 mb-2 bg-light text-dark">
+                        <pre id="json">
+{
+	"ResponseCode": "00000000",
+	"ResponseDesc": "success"
+}
+</pre>
+                    </div>
+
                 </div>
             </div>
         </div>

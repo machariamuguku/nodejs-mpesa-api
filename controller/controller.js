@@ -319,7 +319,8 @@ exports.getWebHook = (req, res) => {
 
     // format response code to safaricom servers
     let successMessage = {
-        ResponseCode: "00000000"
+        "ResponseCode": "00000000",
+		"ResponseDesc": "success"
     }
 
     // add received metadata to database
@@ -329,5 +330,5 @@ exports.getWebHook = (req, res) => {
         ReturnParameter: `update to complete for ${body.CheckoutRequestID}`
     });
 
-    res.status(200).send(successMessage);
+    res.status(200).json(successMessage);
 }
