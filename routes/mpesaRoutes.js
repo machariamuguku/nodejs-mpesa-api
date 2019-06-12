@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // request the controller file
-const controller = require('../controller/controller');
+const controller = require('../controller/mpesaController');
 
 /*
 set bodyparser middleware

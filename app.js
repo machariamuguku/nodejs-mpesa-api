@@ -18,8 +18,8 @@ an environment variable or declared explicitly
 const port = process.env.PORT || 3000;
 
 // use routes from an external file
-const routes = require('./routes/routes');
-app.use('/', routes)
+const mpesaRoutes = require('./routes/mpesaRoutes');
+app.use('/', mpesaRoutes)
 
 // Define a templating engine to use for documentation
 // will be served at root '/'

@@ -1,4 +1,4 @@
-const LipaNaMPesaSchema = require('../model/model');
+const LipaNaMPesaSchema = require('../model/mpesaModel');
 
 // get extra modules
 const request = require("request");
